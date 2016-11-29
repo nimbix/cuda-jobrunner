@@ -14,4 +14,4 @@ sudo apt-get install -y --force-yes libbz2-dev libssl-dev autoconf build-essenti
 # make -j4
 # sudo make install
 # rm -rf /tmp/munge-tmp
-sudo rm -rf /var/lib/apt/*
+#sudo rm -rf /var/lib/apt/*

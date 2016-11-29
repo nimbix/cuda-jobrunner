@@ -12,14 +12,11 @@ RUN apt-get update && \
             python-virtualenv \
             wget \
             curl \
-            gdebi \
-             && \
-    rm -rf /var/lib/apt/*
+            gdebi
 
 WORKDIR /tmp
 RUN apt-get update && wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.6/rabbitmq-server_3.6.6-1_all.deb && \
-    gdebi -n rabbitmq-server_3.6.6-1_all.deb && \
-    rm -rf /var/lib/apt/*
+    gdebi -n rabbitmq-server_3.6.6-1_all.deb
 
 RUN sudo dpkg-divert --remove --local /sbin/initctl
 RUN sudo apt-get install --reinstall -y --force-yes upstart
