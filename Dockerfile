@@ -34,6 +34,7 @@ RUN /bin/bash -x ./slurm/scripts/install-slurm.sh
 
 # Build examples
 ADD ./examples /code/examples
+RUN /bin/bash /code/examples/install-torch.sh
 RUN /bin/bash -x /code/examples/install-neural-style.sh
 ADD ./scripts /usr/local/scripts
 
