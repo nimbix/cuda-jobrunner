@@ -1,12 +1,15 @@
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, redirect
 from flask_restful import Resource, Api, reqparse
 import random
 import os
 import subprocess
 
+UPLOAD_FOLDER = '/dev/shm'
+
 
 app = Flask(__name__)
 api = Api(app)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 def queue_job(command, files):
@@ -53,6 +56,7 @@ def status():
 
 
 class Submission(Resource):
+
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('id', type=str)
@@ -118,7 +122,11 @@ class Files(Resource):
                 {'path': 'File not found!'}}
 
     def post(self):
-        pass
+        if 'file' not in self.request.files:
+            return redirect(self.request.url)
+        dest_path = '/data/file'
+        return {'file': dest_path}, 201
+
 
 # Launching jobs and querying status
 api.add_resource(Submission, '/submission')

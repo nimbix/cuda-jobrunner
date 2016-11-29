@@ -13,6 +13,7 @@ cd /tmp/slurm-tmp/slurm-slurm-${SLURM_VERSION_STRING}
 ./configure --prefix=${INSTALL_ROOT}/slurm-${SLURM_VERSION}
 make -j4
 sudo make install
+sudo ln -sf /opt/slurm-${SLURM_VERSION} /opt/slurm
 
 # Cleanup
 rm -rf /tmp/slurm-tmp
