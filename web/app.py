@@ -32,7 +32,7 @@ def run_job(command):
 def terminate():
     """Cleanly terminates the entire web service environment."""
     os.system('sudo poweroff')
-    return {'status': 'Terminating'}
+    return {'message': 'terminating'}, 202
 
 
 @app.route('/status', methods=['GET'])
