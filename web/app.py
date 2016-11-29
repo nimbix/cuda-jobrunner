@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory, redirect
+from flask import Flask, send_from_directory, redirect, request
 from flask_restful import Resource, Api, reqparse
 import random
 import os
@@ -75,29 +75,20 @@ class Submission(Resource):
         args = parser.parse_args()
 
         command = args.get('command', None)
-        files = args.get('files', '')
 
-        if files:
-            file_list = files.split(',')
-        else:
-            file_list = []
+        file_list = request.files.getlist('file[]')
+        filepaths = []
 
-        missing_files = []
         for i in file_list:
-            if not os.path.exists(i):
-                missing_files.append(i)
-        if len(missing_files) > 0:
-            return {'message':
-                    {'files':
-                     'Files do not exist: {files}'.format(
-                         files=''.join(missing_files))}}, 400
+            i.save(i.filename)
+            filepaths.append(i.filename)
 
         # Post asynchronously
-        job_id = queue_job(command, file_list)
+        job_id = queue_job(command, filepaths)
         return {
             'id': job_id,
             'command': command,
-            'files': ''.join(file_list)
+            'files': ';'.join(filepaths)
         }, 201
 
 
