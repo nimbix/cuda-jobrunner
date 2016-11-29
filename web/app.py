@@ -55,6 +55,11 @@ def status():
     return {'status': 'OK'}
 
 
+def handle_file(file_t, destination):
+    file_t.save(destination)
+    return destination
+
+
 class Submission(Resource):
 
     def get(self):
@@ -80,7 +85,7 @@ class Submission(Resource):
         filepaths = []
 
         for i in file_list:
-            i.save(i.filename)
+            handle_file(i, i.filename)
             filepaths.append(i.filename)
 
         # Post asynchronously
@@ -98,9 +103,13 @@ class Files(Resource):
     """
 
     def get(self):
+        """Retrieves a file from path
+
+        Args:
+          path(string): Full path to file
+        """
         parser = reqparse.RequestParser()
         parser.add_argument('path', type=str)
-
         args = parser.parse_args()
         file_path = args.get('path', None)
 
@@ -110,13 +119,28 @@ class Files(Resource):
             return send_from_directory(dirname, basepath)
 
         return {'message':
-                {'path': 'File not found!'}}
+                {'path': 'File not found!'}}, 404
 
     def post(self):
-        if 'file' not in self.request.files:
-            return redirect(self.request.url)
-        dest_path = '/data/file'
-        return {'file': dest_path}, 201
+        """Upload a file or file(s) to an arbitrary location
+
+        Args:
+          file or file[]: multipart/form file uploads
+        """
+
+        files_added = []
+        if 'file' in request.files:
+            f = request.files['file']
+            handle_file(f, f.filename)
+        elif 'file[]' in request.files:
+            files = request.files.getlist('file[]')
+            for i in files:
+                result = handle_file(i, i.filename)
+                files_added.append(result)
+        else:
+            return {'message': 'No files found.'}, 400
+
+        return {'files': files_added}, 201
 
 
 # Launching jobs and querying status
