@@ -1,9 +1,12 @@
 #!/bin/bash
 
-sudo service supervisor start
+/code/slurm/scripts/generate-munge-key.sh
+
 sudo service munge start
-/usr/local/scripts/generate-munge-key.sh
-/usr/local/scripts/startslurm.sh
+/code/slurm/scripts/startslurm.sh
 /code/rabbitmq/setup-rmq.sh
 
+
+sudo service supervisor start
+sudo touch /var/supervisor.log
 tail -f /var/supervisor.log
