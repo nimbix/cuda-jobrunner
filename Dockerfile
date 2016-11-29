@@ -1,6 +1,7 @@
 FROM nimbix/ubuntu-cuda:trusty
 
 # Upstart hack
+USER root
 RUN dpkg-divert --local --rename --add /sbin/initctl
 RUN ln -s /bin/true /sbin/initctl
 
@@ -16,9 +17,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/*
 
 WORKDIR /tmp
-RUN sudo apt-get update
-RUN wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.6/rabbitmq-server_3.6.6-1_all.deb && \
-    gdebi -n rabbitmq-server_3.6.6-1_all.deb
+RUN apt-get update && wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.6/rabbitmq-server_3.6.6-1_all.deb && \
+    gdebi -n rabbitmq-server_3.6.6-1_all.deb && \
+    rm -rf /var/lib/apt/*
 
 RUN sudo dpkg-divert --remove --local /sbin/initctl
 RUN sudo apt-get install --reinstall -y --force-yes upstart
