@@ -1,5 +1,5 @@
 site_name: Nimbix Job Runner
 pages:
-  - Home: index.md
+  - Overview: index.md
   - API: api.md
 theme: readthedocs

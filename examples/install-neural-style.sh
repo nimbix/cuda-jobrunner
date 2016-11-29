@@ -10,6 +10,7 @@ sudo apt-get install -y \
      protobuf-compiler \
      libjpeg-dev \
      libpng12-dev
+sudo rm -rf /var/lib/apt/*
 
 # Install Torch
 sudo mkdir -p /usr/local/torch

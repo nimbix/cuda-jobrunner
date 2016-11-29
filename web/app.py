@@ -4,7 +4,7 @@ import random
 import os
 import subprocess
 
-UPLOAD_FOLDER = '/dev/shm'
+UPLOAD_FOLDER = '/data'
 
 
 app = Flask(__name__)
@@ -23,14 +23,13 @@ def queue_job(command, files):
     return job_id
 
 
-def run_job(command):
-    code = subprocess.call(['qsub', command])
-    return code
-
-
 @app.route('/terminate', methods=['POST'])
 def terminate():
-    """Cleanly terminates the entire web service environment."""
+    """Cleanly terminates the entire web service environment.
+
+    Returns:
+       202 {'message': <string>}
+    """
     os.system('sudo poweroff')
     return {'message': 'terminating'}, 202
 
@@ -107,6 +106,10 @@ class Files(Resource):
 
         Args:
           path(string): Full path to file
+
+        Returns:
+          200 File returned for download
+          404 File not found
         """
         parser = reqparse.RequestParser()
         parser.add_argument('path', type=str)

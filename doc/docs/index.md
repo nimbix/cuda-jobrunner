@@ -1,6 +1,12 @@
 # Overview
 This is a turn-key REST-driven job scheduler for custom applications. The application has been tested on Ubuntu 14.04 and Ubuntu 16.04 base images on Nimbix. Any Ubuntu 14.04 or Ubuntu 16.04 operating system should support the installation. If you are interested in running on another flavor of Linux such as CentOS, please feel free to open an issue on Github or send a pull request.
 
+## Use Cases
+
+*   Embarassingly parallel machine-learning processing on big data sets
+*   Accelerated machine-learning inference cluster using NVIDIA GPUs, IBM POWER8, or Xilinx FPGAs
+*   Turn-key REST API for latency-critical command-line applications
+
 ## Installation
 
 **Operating System**: Ubuntu 14.04 or Ubuntu 16.04 Docker base images
@@ -27,6 +33,7 @@ Use the command, `launch` in `/etc/NAE/AppDef.json`, which will invoke `/usr/loc
 # Example Usage
 
 ### Client
+
 ```python
 # Launch Cluster
 job = ...
@@ -37,10 +44,3 @@ c.submit(job)
 ...
 
 ```
-
-# Use Cases
-
-*   Embarassingly parallel machine-learning processing on big data sets
-*   Accelerated machine-learning inference cluster using NVIDIA GPUs, IBM POWER8, or Xilinx FPGAs
-*   Turn-key REST API for latency-critical command-line applications
-
