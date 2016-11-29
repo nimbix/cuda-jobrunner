@@ -1,0 +1,21 @@
+<h1>On-demand Job Scheduler</h1>
+
+<h2>Use Cases</h2>
+<ul>
+  <li>Embarassingly parallel machine-learning processing on big data sets</li>
+  <li>Accelerated machine-learning inference cluster using NVIDIA GPUs, IBM POWER8, or Xilinx FPGAs</li>
+  <li>Turn-key REST API for latency-critical command-line applications</li>
+</ul>
+
+<h2>Installation</h2>
+
+
+<h2>API Documentation</h2>
+
+
+<h2>Job Status Documentation</h2>
+Jobs are submitted asynchronously as a POST request to <b>/submission</b>. In order to obtain the job status of that task, you have two options:
+<ol>
+  <li>Poll /submission/{job_id} for status</li>
+  <li>Subscribe to the <b>response queue using a RabbitMQ Client</b></li>
+</ol>
