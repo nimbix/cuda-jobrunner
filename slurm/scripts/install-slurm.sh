@@ -17,5 +17,10 @@ make -j4
 sudo make install
 sudo ln -sf /opt/slurm-${SLURM_VERSION} /opt/slurm
 
+sudo mkdir -p /var/spool/slurm /var/pool/slurmd
+sudo mkdir -p /var/log/slurm
+sudo touch /var/log/slurm/accounting
+sudo chown -R nimbix:nimbix /var/spool/slurm /var/log/lsurm
+
 # Cleanup
 rm -rf /tmp/slurm-tmp
