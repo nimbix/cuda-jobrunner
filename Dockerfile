@@ -52,9 +52,6 @@ RUN /bin/bash -x /code/web/setup.sh
 
 ADD ./rabbitmq /code/rabbitmq
 
-USER root
-RUN mkdir -p /var/log/slurm/accounting /var/spool/slurmd /var/spool/slurm
-
 USER nimbix
 
 # Build examples
