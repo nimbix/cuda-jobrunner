@@ -3,6 +3,10 @@ from flask_restful import Resource, Api, reqparse
 import random
 import os
 import subprocess
+import logging
+import uuid
+
+logger = logging.getLogger(__name__)
 
 UPLOAD_FOLDER = '/data'
 
@@ -11,15 +15,23 @@ app = Flask(__name__)
 api = Api(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+template = '#!/bin/bash\n' \
+           '#SBATCH -e /tmp/{job_id}.err -o ' \
+           '/tmp/{job_id}.out\nsrun {command}\n'
+
 
 def queue_job(command, files):
-    job_id = int(random.random()*100)
+    job_id = uuid.uuid4()
     message = '"{job_id}","{command}","{files}"\n'.format(
         job_id=job_id,
         command=command,
         files=''.join(files))
-    with open('jobs.txt', 'a') as f:
-        f.write(message)
+    logger.info(message)
+    job_script = '/tmp/{job_id}.sh'.format(job_id=job_id)
+    with open(job_script, 'wb') as f:
+        f.write(template.format(job_id=job_id,
+                                command=command))
+    subprocess.call(['sbatch', '-J', str(job_id), job_script])
     return job_id
 
 
@@ -59,24 +71,21 @@ def handle_file(file_t, destination):
     return destination
 
 
+class Status(Resource):
+    def get(self, job_id):
+        return {'id': job_id, 'status': 'OK'}
+
+
 class Submission(Resource):
 
-    def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('id', type=str)
-        args = parser.parse_args()
-        job_id = args.get('id', None)
-
-        return {'id': job_id, 'status': 'queued'}
-
-    def post(self):
+    def post(self, todo_id=None):
         parser = reqparse.RequestParser()
         parser.add_argument('command',
                             type=str,
                             required=True,
                             help='Command line to execute')
         parser.add_argument('files', type=str)
-        args = parser.parse_args()
+        args = parser.parse_args(strict=True)
 
         command = args.get('command', None)
 
@@ -113,7 +122,7 @@ class Files(Resource):
         """
         parser = reqparse.RequestParser()
         parser.add_argument('path', type=str)
-        args = parser.parse_args()
+        args = parser.parse_args(strict=True)
         file_path = args.get('path', None)
 
         if os.path.exists(file_path):
@@ -148,6 +157,7 @@ class Files(Resource):
 
 # Launching jobs and querying status
 api.add_resource(Submission, '/submission')
+api.add_resource(Status, '/submission/<string:job_id>')
 # Uploading/downloading files over HTTP/S
 api.add_resource(Files, '/files')
 

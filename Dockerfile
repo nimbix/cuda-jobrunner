@@ -58,6 +58,7 @@ RUN mkdir -p /var/log/slurm/accounting /var/spool/slurmd /var/spool/slurm
 USER nimbix
 
 # Build examples
-#ADD ./examples /code/examples
-#RUN /bin/bash /code/examples/install-torch.sh
-#RUN /bin/bash -x /code/examples/install-neural-style.sh
+ADD ./examples /code/examples
+RUN /bin/bash /code/examples/install-torch.sh
+RUN /bin/bash -x /code/examples/install-neural-style.sh
+RUN sudo pip install pika requests
