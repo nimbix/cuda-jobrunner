@@ -1,6 +1,5 @@
-from flask import Flask, send_from_directory, redirect, request
+from flask import Flask, send_from_directory, request
 from flask_restful import Resource, Api, reqparse
-import random
 import os
 import subprocess
 import logging
@@ -16,12 +15,14 @@ api = Api(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 template = '#!/bin/bash\n' \
-           '#SBATCH -e /tmp/{job_id}.err -o ' \
-           '/tmp/{job_id}.out\nsrun {command}\n'
+           '#SBATCH -e /tmp/{job_id}.err -o /tmp/{job_id}.out\n' \
+           '. /usr/local/scripts/jarvice_env.sh\n' \
+           'srun {command}\n'
 
 
 def queue_job(command, files):
-    job_id = uuid.uuid4()
+    job_id = str(uuid.uuid4())
+    error = None
     message = '"{job_id}","{command}","{files}"\n'.format(
         job_id=job_id,
         command=command,
@@ -31,8 +32,11 @@ def queue_job(command, files):
     with open(job_script, 'wb') as f:
         f.write(template.format(job_id=job_id,
                                 command=command))
-    subprocess.call(['sbatch', '-J', str(job_id), job_script])
-    return job_id
+    try:
+        subprocess.check_call(['sbatch', '-J', job_id, job_script])
+    except subprocess.CalledProcessError:
+        error = 'Failure to launch job'
+    return job_id, error
 
 
 @app.route('/terminate', methods=['POST'])
@@ -71,14 +75,9 @@ def handle_file(file_t, destination):
     return destination
 
 
-class Status(Resource):
-    def get(self, job_id):
-        return {'id': job_id, 'status': 'OK'}
-
-
 class Submission(Resource):
 
-    def post(self, todo_id=None):
+    def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('command',
                             type=str,
@@ -97,12 +96,16 @@ class Submission(Resource):
             filepaths.append(i.filename)
 
         # Post asynchronously
-        job_id = queue_job(command, filepaths)
-        return {
-            'id': job_id,
-            'command': command,
-            'files': ';'.join(filepaths)
-        }, 201
+        job_id, error = queue_job(command, filepaths)
+
+        if not error:
+            return {
+                'id': job_id,
+                'command': command,
+                'files': ';'.join(filepaths)
+            }, 201
+        else:
+            return {'message': error}, 500
 
 
 class Files(Resource):
@@ -156,8 +159,8 @@ class Files(Resource):
 
 
 # Launching jobs and querying status
-api.add_resource(Submission, '/submission')
-api.add_resource(Status, '/submission/<string:job_id>')
+api.add_resource(Submission, '/submit')
+
 # Uploading/downloading files over HTTP/S
 api.add_resource(Files, '/files')
 

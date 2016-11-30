@@ -56,6 +56,6 @@ USER nimbix
 
 # Build examples
 ADD ./examples /code/examples
-RUN /bin/bash /code/examples/install-torch.sh
-RUN /bin/bash -x /code/examples/install-neural-style.sh
+#RUN /bin/bash /code/examples/install-torch.sh
+#RUN /bin/bash -x /code/examples/install-neural-style.sh
 RUN sudo pip install pika requests
