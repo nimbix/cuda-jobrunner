@@ -3,6 +3,22 @@ import pika
 import json
 import os
 import requests
+import logging
+
+SLURM_EPILOG_LOGFILE = os.getenv('SLURM_EPILOG_LOGFILE',
+                                 '/code/web/slurm_epilog.log')
+
+root = logging.getLogger()
+root.setLevel(logging.DEBUG)
+fh = logging.FileHandler('/code/web/slurm_epilog.log')
+fh.setLevel(logging.DEBUG)
+formatter = logging.Formatter(
+    '[%(levelname)s] %(name)s %(asctime)s %(message)s')
+fh.setFormatter(formatter)
+root.addHandler(fh)
+
+logger = logging.getLogger('slurm_epilog')
+
 
 CALLBACK_QUEUE = 'job_results'
 
@@ -12,6 +28,9 @@ def publish_response(data):
         pika.ConnectionParameters('localhost'))
     ch = connection.channel()
     message = '{message}\n'.format(message=json.dumps(data))
+    ch.queue_declare(queue=data['id'],
+                     auto_delete=True,
+                     durable=True)
     ch.basic_publish(exchange='',
                      routing_key=CALLBACK_QUEUE,
                      body=message,

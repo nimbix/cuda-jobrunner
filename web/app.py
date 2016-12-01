@@ -4,6 +4,15 @@ import os
 import subprocess
 import logging
 import uuid
+import sys
+
+root = logging.getLogger()
+root.setLevel(logging.DEBUG)
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('[%(levelname)s] %(name)s %(message)s')
+ch.setFormatter(formatter)
+root.addHandler(ch)
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +26,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 template = '#!/bin/bash\n' \
            '#SBATCH -e /tmp/{job_id}.err -o /tmp/{job_id}.out\n' \
            '. /usr/local/scripts/jarvice_env.sh\n' \
-           'srun {command}\n'
+           '/opt/slurm/bin/srun {command}\n'
 
 
 def queue_job(command, files):
@@ -33,7 +42,9 @@ def queue_job(command, files):
         f.write(template.format(job_id=job_id,
                                 command=command))
     try:
-        subprocess.check_call(['sbatch', '-J', job_id, job_script])
+        subprocess.check_call(['/opt/slurm/bin/sbatch',
+                               '-J', job_id,
+                               job_script])
     except subprocess.CalledProcessError:
         error = 'Failure to launch job'
     return job_id, error
