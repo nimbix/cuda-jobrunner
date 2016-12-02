@@ -64,4 +64,4 @@ USER root
 RUN sudo apt-get install -y nginx
 ADD ./nginx/conf/default /etc/nginx/sites-available/webservice
 RUN ln -sf /etc/nginx/sites-available/webservice /etc/nginx/sites-enabled/webservice
-ADD ./doc/site /code/web/
+ADD ./doc/site /code/web/doc
