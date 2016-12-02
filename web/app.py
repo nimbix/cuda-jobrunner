@@ -132,6 +132,9 @@ class Files(Resource):
 
         Returns:
           200 File returned for download
+          200 Directory listing returned for download
+              {'count': <int>,
+               'files': list<str>}
           404 File not found
         """
         parser = reqparse.RequestParser()
@@ -140,9 +143,14 @@ class Files(Resource):
         file_path = args.get('path', None)
 
         if os.path.exists(file_path):
-            basepath = os.path.basename(file_path)
-            dirname = os.path.abspath(os.path.dirname(file_path))
-            return send_from_directory(dirname, basepath)
+            if not os.path.isdir(file_path):
+                basepath = os.path.basename(file_path)
+                dirname = os.path.abspath(os.path.dirname(file_path))
+                return send_from_directory(dirname, basepath)
+            else:
+                files = os.listdir(file_path)
+                return {'count': len(files),
+                        'data': files}, 200
 
         return {'message':
                 {'path': 'File not found!'}}, 404

@@ -59,3 +59,9 @@ ADD ./examples /code/examples
 #RUN /bin/bash /code/examples/install-torch.sh
 #RUN /bin/bash -x /code/examples/install-neural-style.sh
 RUN sudo pip install pika requests
+
+USER root
+RUN sudo apt-get install -y nginx
+ADD ./nginx/conf/default /etc/nginx/sites-available/webservice
+RUN ln -sf /etc/nginx/sites-available/webservice /etc/nginx/sites-enabled/webservice
+ADD ./doc/site /code/web/
