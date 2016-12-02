@@ -27,7 +27,7 @@ server {
         # Make site accessible from http://localhost/
 	server_name localhost;
 
-        ssl_cert /etc/JARVICE/cert.pem;
+        ssl_certificate /etc/JARVICE/cert.pem;
         ssl_certificate_key /etc/JARVICE/cert.pem;
 
         auth_basic "Please Log In";
