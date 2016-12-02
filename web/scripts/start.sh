@@ -10,4 +10,5 @@ fi
 
 . /code/web/.venv/bin/activate
 
-python /code/web/app.py
+cd /code/web
+gunicorn --bind 127.0.0.1:5000 app:app
