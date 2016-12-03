@@ -3,6 +3,8 @@
 sudo /code/slurm/scripts/generate-munge-key.sh
 sudo service munge start
 
+sudo service ssh start
+
 sudo mkdir -p /var/log/slurm
 sudo touch /var/log/slurm/accounting
 sudo chown -R nimbix:nimbix /var/log/slurm
