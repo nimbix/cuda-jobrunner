@@ -25,8 +25,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 template = '#!/bin/bash\n' \
            '#SBATCH -e /tmp/{job_id}.err -o /tmp/{job_id}.out\n' \
-           '. /usr/local/scripts/jarvice_env.sh\n' \
-           '/opt/slurm/bin/srun {command}\n'
+           'srun /usr/local/scripts/jarvice_env.sh {command}\n'
 
 
 def queue_job(command, files):
