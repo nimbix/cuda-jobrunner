@@ -25,12 +25,18 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 template = '#!/bin/bash\n' \
            '#SBATCH -e /tmp/{job_id}.err -o /tmp/{job_id}.out\n' \
-           'srun /usr/local/scripts/jarvice_env.sh {command}\n'
+           '{extra_options}\n'
+           '/opt/slurm/bin/srun /usr/local/scripts/jarvice_env.sh {command}\n'
 
 
-def queue_job(command, files):
+def queue_job(command, files, gpus=None):
     job_id = str(uuid.uuid4())
     error = None
+    extra_options = ''
+
+    if gpus:
+        extra_options += '--gres=gpu:{gpu_count}'.format(
+            gpu_count=str(gpus))
     message = '"{job_id}","{command}","{files}"\n'.format(
         job_id=job_id,
         command=command,
@@ -39,6 +45,7 @@ def queue_job(command, files):
     job_script = '/tmp/{job_id}.sh'.format(job_id=job_id)
     with open(job_script, 'wb') as f:
         f.write(template.format(job_id=job_id,
+                                extra_options=extra_options,
                                 command=command))
     try:
         subprocess.check_call(['/opt/slurm/bin/sbatch',
@@ -94,10 +101,12 @@ class Submission(Resource):
                             required=True,
                             help='Command line to execute')
         parser.add_argument('files', type=str)
+        parser.add_argument('gpus', type=int)
         args = parser.parse_args(strict=True)
 
         command = args.get('command', None)
-
+        gpus = args.get('gpus', None)
+        
         file_list = request.files.getlist('file[]')
         filepaths = []
 
@@ -106,14 +115,17 @@ class Submission(Resource):
             filepaths.append(i.filename)
 
         # Post asynchronously
-        job_id, error = queue_job(command, filepaths)
+        job_id, error = queue_job(command, filepaths, gpus)
 
         if not error:
-            return {
+            result = {
                 'id': job_id,
                 'command': command,
                 'files': ';'.join(filepaths)
-            }, 201
+            }
+            if gpus:
+                result.insert({'gpus': gpus})
+            return result, 201
         else:
             return {'message': error}, 500
 
