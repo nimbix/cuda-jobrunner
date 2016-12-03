@@ -8,6 +8,7 @@ sudo touch /var/log/slurm/accounting
 sudo chown -R nimbix:nimbix /var/log/slurm
 sudo mkdir -p /var/spool/slurmd
 
+sudo service nginx start
 
 /code/slurm/scripts/startslurm.sh
 /code/rabbitmq/setup-rmq.sh
