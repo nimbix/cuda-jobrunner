@@ -128,5 +128,6 @@ AccountingStorageLoc=/var/log/slurm/accounting
 #
 # COMPUTE NODES
 NodeName=DEFAULT CPUs=16 State=UNKNOWN
-NodeName={{nodes}} CPUs={{cores_per_node}} State=UNKNOWN
+GresTypes=gpu
+NodeName={{nodes}} CPUs={{cores_per_node}} Gres=gpu:tesla:4,gpu:kepler:4 State=UNKNOWN
 PartitionName=debug Nodes={{nodes}} Default=YES MaxTime=INFINITE State=UP
