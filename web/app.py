@@ -35,8 +35,10 @@ def queue_job(command, files, gpus=None):
     extra_options = ''
 
     if gpus:
-        extra_options += '--gres=gpu:{gpu_count}'.format(
-            gpu_count=str(gpus))
+        cpus = 4*gpus
+        extra_options += '#SBATCH --gres=gpu:{gpu_count}\n' \
+                         '#SBATCH -n {cpus}\n'.format(
+                             gpu_count=str(gpus), cpus=cpus)
     message = '"{job_id}","{command}","{files}"\n'.format(
         job_id=job_id,
         command=command,
