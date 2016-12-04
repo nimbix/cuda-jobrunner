@@ -63,5 +63,5 @@ ADD ./nginx/conf/default /etc/nginx/sites-available/webservice
 RUN ln -sf /etc/nginx/sites-available/webservice /etc/nginx/sites-enabled/webservice
 ADD ./doc/site /code/web/doc
 ADD ./NAE/rabbitmqpasswd /etc/NAE/rabbitmqpasswd
-RUN rm -rf ./NAE/AppDef*
+RUN rm -rf /etc/NAE/AppDef*
 RUN apt-get install -y tmux htop
