@@ -97,7 +97,8 @@ SchedulerType=sched/backfill
 #SchedulerAuth=
 #SchedulerPort=
 #SchedulerRootFilter=
-SelectType=select/linear
+SelectType=select/cons_res
+SelectTypeParameters=CR_Core
 FastSchedule=1
 #PriorityType=priority/multifactor
 #PriorityDecayHalfLife=14-0
@@ -130,4 +131,4 @@ AccountingStorageLoc=/var/log/slurm/accounting
 NodeName=DEFAULT CPUs=16 State=UNKNOWN
 {{gres_types}}
 NodeName={{nodes}} CPUs={{cores_per_node}} {{gpu_options}} State=UNKNOWN
-PartitionName=debug Nodes={{nodes}} Default=YES MaxTime=INFINITE State=UP
+PartitionName=debug Nodes={{nodes}} Default=YES MaxTime=INFINITE State=UP OverSubscribe=YES

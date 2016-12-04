@@ -35,10 +35,8 @@ def queue_job(command, files, gpus=None):
     extra_options = ''
 
     if gpus:
-        cpus = 4*gpus
-        extra_options += '#SBATCH --gres=gpu:{gpu_count}\n' \
-                         '#SBATCH -n {cpus}\n'.format(
-                             gpu_count=str(gpus), cpus=cpus)
+        extra_options += '#SBATCH --gres=gpu:{gpu_count}\n'.format(
+                             gpu_count=str(gpus))
     message = '"{job_id}","{command}","{files}"\n'.format(
         job_id=job_id,
         command=command,
@@ -79,7 +77,7 @@ class Jobs(Resource):
             'count': len(jobs),
             'data': jobs
         }
-        return jobs, 200
+        return jobs_response, 200
 
     def post(self):
         parser = reqparse.RequestParser()
