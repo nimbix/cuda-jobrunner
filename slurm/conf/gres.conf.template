@@ -1,1 +1,1 @@
-Name=gpu Count={{gpu_count}}
+Name=gpu Count=4 File=/dev/nvidia[0-3]
