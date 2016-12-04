@@ -25,7 +25,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 template = '#!/bin/bash\n' \
            '#SBATCH -e /tmp/{job_id}.err -o /tmp/{job_id}.out\n' \
-           '{extra_options}\n'
+           '{extra_options}\n' \
            '/opt/slurm/bin/srun /usr/local/scripts/jarvice_env.sh {command}\n'
 
 
@@ -56,43 +56,26 @@ def queue_job(command, files, gpus=None):
     return job_id, error
 
 
-@app.route('/terminate', methods=['POST'])
-def terminate():
-    """Cleanly terminates the entire web service environment.
-
-    Returns:
-       202 {'message': <string>}
-    """
-    os.system('sudo poweroff')
-    return {'message': 'terminating'}, 202
-
-
-@app.route('/status', methods=['GET'])
-def status():
-    """Returns status of the environment in the following format:
-
-    {
-        'id': '%NAE_PUBLICADDR%',
-        'shutdown_policy': {
-            'policy': 'idle_countdown'
-         },
-         'jobs': [{
-             'id': 'job-xyz-response-queue',
-             'status': 'xxx',
-             'command': 'yyy',
-             'output_dir': 'zzz'
-         }, ... ],
-    }
-    """
-    return {'status': 'OK'}
-
-
 def handle_file(file_t, destination):
     file_t.save(destination)
     return destination
 
 
-class Submission(Resource):
+class Jobs(Resource):
+
+    def get(self):
+        output = subprocess.check_output(['/opt/slurm/bin/sacct', '-p', '-a'])
+        jobs = []
+        for lines in output.split('\n'):
+            cols = lines.split('|')
+            jobs.append({
+                'internal_id': cols[0],
+                'job_id': cols[1]})
+        jobs_response = {
+            'count': len(jobs),
+            'data': jobs
+        }
+        return jobs, 200
 
     def post(self):
         parser = reqparse.RequestParser()
@@ -106,7 +89,7 @@ class Submission(Resource):
 
         command = args.get('command', None)
         gpus = args.get('gpus', None)
-        
+
         file_list = request.files.getlist('file[]')
         filepaths = []
 
@@ -128,6 +111,15 @@ class Submission(Resource):
             return result, 201
         else:
             return {'message': error}, 500
+
+
+class JobControl(Resource):
+
+    def get(self, job_id):
+        return {'job_id': job_id}
+
+    def delete(self, job_id):
+        return {'job_id': job_id}
 
 
 class Files(Resource):
@@ -189,7 +181,8 @@ class Files(Resource):
 
 
 # Launching jobs and querying status
-api.add_resource(Submission, '/submit')
+api.add_resource(Jobs, '/jobs')
+api.add_resource(JobControl, '/jobs/<job_id>')
 
 # Uploading/downloading files over HTTP/S
 api.add_resource(Files, '/files')
