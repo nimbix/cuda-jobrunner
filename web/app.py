@@ -71,9 +71,10 @@ class Jobs(Resource):
         lines = output.split('\n')
         for i in lines:
             cols = i.split('|')
-            jobs.append({
-                'internal_id': cols[0],
-                'job_id': cols[1]})
+            if len(cols) > 2:
+                jobs.append({
+                    'internal_id': cols[0],
+                    'job_id': cols[1]})
         jobs_response = {
             'count': len(jobs),
             'data': jobs
