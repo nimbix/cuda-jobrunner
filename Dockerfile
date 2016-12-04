@@ -2,8 +2,8 @@ FROM jarvice/app-neuralstyle
 
 # Upstart hack
 USER root
-RUN dpkg-divert --local --rename --add /sbin/initctl
-RUN ln -s /bin/true /sbin/initctl
+#RUN dpkg-divert --local --rename --add /sbin/initctl
+#RUN ln -s /bin/true /sbin/initctl
 
 RUN apt-get update && \
     apt-get install -y \
