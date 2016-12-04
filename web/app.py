@@ -66,8 +66,9 @@ class Jobs(Resource):
     def get(self):
         output = subprocess.check_output(['/opt/slurm/bin/sacct', '-p', '-a'])
         jobs = []
-        for lines in output.split('\n'):
-            cols = lines.split('|')
+        lines = output.split('\n')
+        for i in lines:
+            cols = i.split('|')
             jobs.append({
                 'internal_id': cols[0],
                 'job_id': cols[1]})
@@ -107,7 +108,7 @@ class Jobs(Resource):
                 'files': ';'.join(filepaths)
             }
             if gpus:
-                result.insert({'gpus': gpus})
+                result.update({'gpus': gpus})
             return result, 201
         else:
             return {'message': error}, 500
