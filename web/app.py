@@ -132,6 +132,13 @@ class JobControl(Resource):
                     }})
         return jobs
 
+    def _get_internal_id_from_job_name(self, job_id):
+        jobs = self._get_acct_jobs()
+        jobs_dict = dict(jobs)
+        if job_id in jobs_dict:
+            return jobs_dict[job_id]['internal_id']
+        return None
+
     def get(self, job_id):
         jobs = self._get_acct_jobs()
         for i in jobs:
@@ -141,10 +148,16 @@ class JobControl(Resource):
         return {'message': 'Job id {job_id} not found!'.format(
             job_id=job_id)}, 404
 
-
     def delete(self, job_id):
-        jobs = self._get_acct_jobs()
-        return jobs
+
+        internal_job_id = self._get_internal_id_from_job_name(job_id)
+        if internal_job_id:
+            subprocess.call(['/opt/slurm/bin/scancel',
+                             '{internal_job_id}'.format(
+                                 internal_job_id=internal_job_id)])
+            return {'job_id': job_id,
+                    'message': 'Canceling job'}, 202
+        return {'message': 'Job not found'}, 404
 
 
 class Files(Resource):
