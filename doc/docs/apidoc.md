@@ -4,15 +4,44 @@
 
 The REST API exposes simple job scheduling functionality for arbitrary asychronous, compute-intensive workflows.
 
-### /submission
+### /jobs
+
+**GET** Queries a list of job statuses
+
+**Responses**
+
+  Code | Meaning
+  -----|--------
+  200  | List of jobs returned
+
+Response Content:
+
+  Param | Type | Description
+  ------|------|------------
+  count | int  | Number of currently running jobs
+  results | array | Array of currently running jobs
+  results[i] | job | dict-like representation of job
 
 **POST** Submit a new job to be processed asynchronously
 
    Param      | Type          | Description
    ---------- | ------------- | ----------
-   command | string | command that should be invoked in the environment
-   file[]     | file(s) | multipart form-data files, where name of the file indicates the destination path
-   unique_id | string (optional) | unique id used to track (will be generated if not provided)
+   command    | string        | command that should be invoked in the environment
+   file[]     | file(s)       | multipart form-data files, where name of the file indicates the destination path
+
+**Responses**
+
+  Code | Meaning
+  -----|--------
+  201  | Job has been created
+
+Response Content:
+
+  Param | Type | Description
+  ------|------|------------
+  job_id|string| unique job identifier
+  command|string| The command used
+  gpus | int(optional) | If present, indicates the number of GPUs requested
 
 ** Example **
 
@@ -24,9 +53,30 @@ response = requests.post('http://localhost:5000/submission',
 print(response.status_code)
 print(response.json())
 ```
-### /status/<string:job_id>
 
-**GET** Queries a list of job statuses
+### /jobs/{job_id}
+
+**GET** Queries status of a single job
+
+**Responses**
+
+  Param | Type | Description
+  ------|------|------------
+  job_id|string|Job ID for currently running job
+  status|string|One of 'QUEUED', 'PENDING', 'RUNNING', 'COMPLETE', 'FAILED'
+
+  Code | Meaning
+  -----|--------
+  200  | OK
+  404  | Job ID is not found
+
+**DELETE** Schedules immediate termination of currently running job
+
+**Responses**
+
+  Code | Meaning
+  -----|--------
+  202  | Shutdown has been scheduled
 
 ### /files
 
@@ -36,23 +86,6 @@ print(response.json())
   ------|------|------------
   path  | string | absolute path to a file or directory
 
-
-**Example**
-
-### /download
-
-**GET**
-
-### /terminate
-
-**POST** With no parameters, schedules the web service environment to terminate immediately
-
-**Responses**
-
-  Code | Meaning
-  -----|--------
-  202  | Shutdown has been scheduled
-  
 
 ## Publish-Subscribe via RabbitMQ
 

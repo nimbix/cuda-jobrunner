@@ -118,7 +118,19 @@ class Jobs(Resource):
 class JobControl(Resource):
 
     def get(self, job_id):
-        return {'job_id': job_id}
+        jobs = dict()
+        completed = subprocess.check_output(
+            ['/opt/slurm/bin/sacct', '-a', '-p', '-n'])
+        for row in completed.split('\n'):
+            row_items = row.split('|')
+            if len(row_items) >= 7:
+                jobs.update({
+                    row_items[1]: {
+                        'id': row_items[1],
+                        'status': row_items[5]
+                    }})
+#        queued_or_running = subprocess.check_output(['/opt/slurm/bin/squeue'])
+        return jobs
 
     def delete(self, job_id):
         return {'job_id': job_id}
