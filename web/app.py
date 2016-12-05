@@ -77,7 +77,7 @@ def parse_acct_jobs(raw_output):
         row_items = row.split('|')
         if len(row_items) >= 7 and len(row_items[0].split('.')) == 1:
             job_id = row_items[1]
-            internal_id = row_items[6]
+            internal_id = row_items[4]
             status = row_items[5]
 
             jobs.update({job_id:
@@ -93,7 +93,7 @@ def parse_acct_jobs(raw_output):
 def get_acct_jobs(internal=False):
     output = subprocess.check_output(
         ['/opt/slurm/bin/sacct', '-a', '-p', '-n'])
-    return parse_acct_jobs(output)
+    return parse_acct_jobs(output, internal=False)
 
 
 class Jobs(Resource):
@@ -145,8 +145,8 @@ class Jobs(Resource):
 
 class JobControl(Resource):
 
-    def _get_acct_jobs(self):
-        return get_acct_jobs()
+    def _get_acct_jobs(self, internal=False):
+        return get_acct_jobs(internal)
 
     def _get_internal_id_from_job_name(self, job_id):
         jobs = self._get_acct_jobs(internal=True)
@@ -157,10 +157,8 @@ class JobControl(Resource):
 
     def get(self, job_id):
         jobs = self._get_acct_jobs()
-        for i in jobs:
-            if i['id'] == job_id:
-                return i
-
+	if job_id in jobs.keys():
+	    return jobs.get(job_id)
         return {'message': 'Job id {job_id} not found!'.format(
             job_id=job_id)}, 404
 
@@ -274,7 +272,9 @@ class Output(Resource):
 
     def get(self, job_id):
         """Returns stdout from job"""
-        return send_from_directory('/tmp', '{job_id}.out')
+
+        return send_from_directory('/tmp', '{job_id}.out'.format(
+            job_id=job_id))
 
 
 # Launching jobs and querying status
