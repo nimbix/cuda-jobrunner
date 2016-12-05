@@ -23,36 +23,17 @@ app = Flask(__name__)
 api = Api(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-template = '#!/bin/bash\n' \
-           '#SBATCH -e /tmp/{job_id}.err -o /tmp/{job_id}.out\n' \
-           '{extra_options}\n' \
-           '/opt/slurm/bin/srun /usr/local/scripts/jarvice_env.sh {command}\n'
-
 
 def queue_job(command, files, gpus=None):
-    job_id = str(uuid.uuid4())
-    error = None
-    extra_options = ''
+    """Queue job using Slurm"""
+    job_id, error = SlurmInterface.submit(command, gpus)
 
-    if gpus:
-        extra_options += '#SBATCH --gres=gpu:{gpu_count}\n'.format(
-                             gpu_count=str(gpus))
     message = '"{job_id}","{command}","{files}"\n'.format(
         job_id=job_id,
         command=command,
         files=''.join(files))
     logger.info(message)
-    job_script = '/tmp/{job_id}.sh'.format(job_id=job_id)
-    with open(job_script, 'wb') as f:
-        f.write(template.format(job_id=job_id,
-                                extra_options=extra_options,
-                                command=command))
-    try:
-        subprocess.check_call(['/opt/slurm/bin/sbatch',
-                               '-J', job_id,
-                               job_script])
-    except subprocess.CalledProcessError:
-        error = 'Failure to launch job'
+
     return job_id, error
 
 
@@ -90,17 +71,118 @@ def parse_acct_jobs(raw_output):
     return jobs
 
 
-def get_acct_jobs(internal=False):
-    output = subprocess.check_output(
-        ['/opt/slurm/bin/sacct', '-a', '-p', '-n'])
-    return parse_acct_jobs(output, internal=False)
+class SlurmInterface(object):
+    template = '#!/bin/bash\n' \
+               '#SBATCH -e /tmp/{job_id}.err -o /tmp/{job_id}.out\n' \
+               '{extra_options}\n' \
+               '/opt/slurm/bin/srun ' \
+               '/usr/local/scripts/jarvice_env.sh {command}\n'
+
+    @classmethod
+    def get_job_status(cls, job_name):
+        job_status = 'placeholder'
+        job_output = 'path-to-output'
+        raise
+        return {'id': job_name,
+                'status': job_status,
+                'output': job_output}
+    
+    @classmethod
+    def get_all_jobs(cls):
+
+        queued = cls.get_queued_jobs()
+        not_queued = cls.get_acct_jobs()
+        jobs = queued.copy()
+        jobs.update(not_queued)
+        return jobs
+
+    @classmethod
+    def get_acct_jobs(cls, internal=False):
+        """Use sacct command to query all jobs that are running or
+        ending
+
+        Args:
+          internal: Whether to include the internal SLURM job identifier
+                    which must be used for some commands like scancel.
+
+        Returns:
+          dict: Dict of {
+            key(job_id):
+               {'id': job_id, 'status': ..., 'internal_id'}}
+        """
+        output = subprocess.check_output(
+            ['/opt/slurm/bin/sacct', '-a', '-p', '-n'])
+        return parse_acct_jobs(output, internal=False)
+
+    @classmethod
+    def get_queued_jobs(cls):
+
+        output = subprocess.check_output(
+            ['/opt/slurm/bin/squeue',
+             '-t', 'PENDING',
+             '-n',
+             '-o', '%i,%j,%T'])
+        lines = output.split('\n')
+        jobs = {}
+        for line in lines:
+            cols = line.split(',')
+            internal_id = cols[0]
+            job_id = cols[1]
+            status = cols[2]
+            jobs.update({
+                job_id: {
+                    'id': job_id,
+                    'internal_id': internal_id,
+                    'status': status
+                }})
+        return jobs
+
+    @classmethod
+    def submit(cls, command, gpus=None):
+        """Submit a job to SLURM using sbatch
+
+        Args:
+          command: The command to execute
+          gpus: The number of GPUs requested by the job
+        """
+        job_id = str(uuid.uuid4())
+        error = None
+        extra_options = ''
+        if gpus:
+            extra_options += '#SBATCH --gres=gpu:{gpu_count}\n'.format(
+                gpu_count=str(gpus))
+
+        job_script = '/tmp/{job_id}.sh'.format(job_id=job_id)
+        with open(job_script, 'wb') as f:
+            f.write(cls.template.format(job_id=job_id,
+                                        extra_options=extra_options,
+                                        command=command))
+
+        try:
+            subprocess.check_call(['/opt/slurm/bin/sbatch',
+                                   '-J', job_id,
+                                   job_script])
+        except subprocess.CalledProcessError:
+            error = 'Failure to launch job'
+        return job_id, error
+
+    @classmethod
+    def cancel(cls, job_id=None, internal_id=None):
+
+        if job_id:
+            subprocess.call(['/opt/slurm/bin/scancel',
+                             '-n', '{job_id}'.format(job_id=job_id)])
+            return {'job_id': job_id,
+                    'message': 'Caceling job'}, 202
+        return {'message': 'Job not found'}, 404
 
 
 class Jobs(Resource):
     """List and create jobs
     """
     def get(self):
-        jobs = get_acct_jobs()
+        """Query list of jobs"""
+        jobs = SlurmInterface.get_acct_jobs()
         jobs_response = {
             'count': len(jobs),
             'data': jobs
@@ -108,6 +190,14 @@ class Jobs(Resource):
         return jobs_response, 200
 
     def post(self):
+        """Submit a job
+
+        Args:
+          command: A bash command to execute.
+          file[](optional): One or more files to upload, with identifier as the
+                            destination.
+          gpus: The minimum number of GPUs requested for this job.
+        """
         parser = reqparse.RequestParser()
         parser.add_argument('command',
                             type=str,
@@ -124,8 +214,8 @@ class Jobs(Resource):
         filepaths = []
 
         for i in file_list:
-            handle_file(i, i.filename)
-            filepaths.append(i.filename)
+            path = handle_file(i, i.filename)
+            filepaths.append(path)
 
         # Post asynchronously
         job_id, error = queue_job(command, filepaths, gpus)
@@ -146,7 +236,7 @@ class Jobs(Resource):
 class JobControl(Resource):
 
     def _get_acct_jobs(self, internal=False):
-        return get_acct_jobs(internal)
+        return SlurmInterface.get_acct_jobs(internal)
 
     def _get_internal_id_from_job_name(self, job_id):
         jobs = self._get_acct_jobs(internal=True)
@@ -156,16 +246,18 @@ class JobControl(Resource):
         return None
 
     def get(self, job_id):
+        """Get status of a submitted job"""
         jobs = self._get_acct_jobs()
-	if job_id in jobs.keys():
-	    return jobs.get(job_id)
+        if job_id in jobs.keys():
+            return jobs.get(job_id)
         return {'message': 'Job id {job_id} not found!'.format(
             job_id=job_id)}, 404
 
     def delete(self, job_id):
-
+        """Cancel a queued or running job"""
         internal_job_id = self._get_internal_id_from_job_name(job_id)
         if internal_job_id:
+            SlurmInterface.cancel(job_id=job_id)
             subprocess.call(['/opt/slurm/bin/scancel',
                              '{internal_job_id}'.format(
                                  internal_job_id=internal_job_id)])
@@ -271,10 +363,19 @@ class Files(Resource):
 class Output(Resource):
 
     def get(self, job_id):
-        """Returns stdout from job"""
+        """Returns stdout from job
 
-        return send_from_directory('/tmp', '{job_id}.out'.format(
-            job_id=job_id))
+        Args:
+          job_id: job_id for queried job
+        """
+        # TODO: Look up Standard out via slurm rather than using this
+        # as the default location.
+        output_path = '/tmp/{job_id}.out'.format(job_id=job_id)
+        if os.path.exists(output_path):
+            return send_from_directory('/tmp', '{job_id}.out'.format(
+                job_id=job_id))
+        else:
+            return {'message': 'Job output not found. Is it running?'}, 404
 
 
 # Launching jobs and querying status
@@ -283,7 +384,7 @@ api.add_resource(JobControl, '/jobs/<job_id>')
 api.add_resource(Output, '/output/<job_id>')
 
 
-# Uploading/downloading files over HTTP/S
+# Uploading/downloading files over HTTP(S)
 api.add_resource(Files, '/files')
 
 if __name__ == '__main__':

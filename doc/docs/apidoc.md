@@ -78,6 +78,11 @@ print(response.json())
   -----|--------
   202  | Shutdown has been scheduled
 
+  Param | Type | Description
+  ------|------|------------
+  id    | string | job id
+  message | string | Status message that job is shutting down
+
 ### /files
 
 **GET** Retreive a file for download, or a list of files in the top-level of a directory.
