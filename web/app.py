@@ -61,18 +61,46 @@ def handle_file(file_t, destination):
     return destination
 
 
-class Jobs(Resource):
+def validate_path(path):
 
+    if path[0] != '/':
+        return False, 'Path must be absolute path beginning with /'
+
+    return True
+
+
+def parse_acct_jobs(raw_output):
+
+    lines = raw_output.split('\n')
+    jobs = {}
+    for row in lines:
+        row_items = row.split('|')
+        if len(row_items) >= 7 and len(row_items[0].split('.')) == 1:
+            job_id = row_items[1]
+            internal_id = row_items[6]
+            status = row_items[5]
+
+            jobs.update({job_id:
+                         {
+                             'id': job_id,
+                             'status': status,
+                             'internal_id': internal_id
+                         }})
+
+    return jobs
+
+
+def get_acct_jobs(internal=False):
+    output = subprocess.check_output(
+        ['/opt/slurm/bin/sacct', '-a', '-p', '-n'])
+    return parse_acct_jobs(output)
+
+
+class Jobs(Resource):
+    """List and create jobs
+    """
     def get(self):
-        output = subprocess.check_output(['/opt/slurm/bin/sacct', '-p', '-a'])
-        jobs = []
-        lines = output.split('\n')
-        for i in lines:
-            cols = i.split('|')
-            if len(cols) > 2:
-                jobs.append({
-                    'internal_id': cols[0],
-                    'job_id': cols[1]})
+        jobs = get_acct_jobs()
         jobs_response = {
             'count': len(jobs),
             'data': jobs
@@ -118,22 +146,10 @@ class Jobs(Resource):
 class JobControl(Resource):
 
     def _get_acct_jobs(self):
-        jobs = []
-        completed = subprocess.check_output(
-            ['/opt/slurm/bin/sacct', '-a', '-p', '-n'])
-        for row in completed.split('\n'):
-            row_items = row.split('|')
-            if len(row_items) >= 7:
-                jobs.append({
-                    row_items[1]: {
-                        'id': row_items[1],
-                        'status': row_items[5],
-                        'internal_id': row_items[0]
-                    }})
-        return jobs
+        return get_acct_jobs()
 
     def _get_internal_id_from_job_name(self, job_id):
-        jobs = self._get_acct_jobs()
+        jobs = self._get_acct_jobs(internal=True)
         jobs_dict = dict(jobs)
         if job_id in jobs_dict:
             return jobs_dict[job_id]['internal_id']
@@ -164,6 +180,10 @@ class Files(Resource):
     """Static file REST endpoint. Note that all files that are not stored
     in /data will not be persisted when this environment is terminated.
     """
+    def _validate_path(self, path):
+        if path[0] != '/':
+            return False, 'Path must be absolute beginning with /'
+        return True, None
 
     def get(self):
         """Retrieves a file from path
@@ -194,7 +214,7 @@ class Files(Resource):
                         'data': files}, 200
 
         return {'message':
-                {'path': 'File not found!'}}, 404
+                {'path': 'File not found.'}}, 404
 
     def post(self):
         """Upload a file or file(s) to an arbitrary location
@@ -217,10 +237,51 @@ class Files(Resource):
 
         return {'files': files_added}, 201
 
+    def delete(self):
+        """Removes a file or directory
+
+        Args:
+          path: Absolute path to file or directory to remove
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument('path', type=str)
+
+        args = parser.parse_args(strict=True)
+        file_path = args.path('path', None)
+
+        is_valid, message = validate_path(file_path)
+        if not is_valid:
+            return {'message': {'path': message}}, 400
+
+        if os.path.exists(file_path):
+            try:
+                if not os.path.isdir(file_path):
+                    os.remove(file_path)
+                else:
+                    os.rmdir(file_path)
+            except Exception:
+                return {'message': 'Unexpected failure removing file'}, 500
+            return {
+                'message': 'Removing {file_path}'.format(
+                    file_path=file_path)
+            }, 200
+        else:
+            return {'message':
+                    {'path': 'File not found.'}}, 404
+
+
+class Output(Resource):
+
+    def get(self, job_id):
+        """Returns stdout from job"""
+        return send_from_directory('/tmp', '{job_id}.out')
+
 
 # Launching jobs and querying status
 api.add_resource(Jobs, '/jobs')
 api.add_resource(JobControl, '/jobs/<job_id>')
+api.add_resource(Output, '/output/<job_id>')
+
 
 # Uploading/downloading files over HTTP/S
 api.add_resource(Files, '/files')
