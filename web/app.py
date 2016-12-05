@@ -117,23 +117,34 @@ class Jobs(Resource):
 
 class JobControl(Resource):
 
-    def get(self, job_id):
-        jobs = dict()
+    def _get_acct_jobs(self):
+        jobs = []
         completed = subprocess.check_output(
             ['/opt/slurm/bin/sacct', '-a', '-p', '-n'])
         for row in completed.split('\n'):
             row_items = row.split('|')
             if len(row_items) >= 7:
-                jobs.update({
+                jobs.append({
                     row_items[1]: {
                         'id': row_items[1],
-                        'status': row_items[5]
+                        'status': row_items[5],
+                        'internal_id': row_items[0]
                     }})
-#        queued_or_running = subprocess.check_output(['/opt/slurm/bin/squeue'])
         return jobs
 
+    def get(self, job_id):
+        jobs = self._get_acct_jobs()
+        for i in jobs:
+            if i['id'] == job_id:
+                return i
+
+        return {'message': 'Job id {job_id} not found!'.format(
+            job_id=job_id)}, 404
+
+
     def delete(self, job_id):
-        return {'job_id': job_id}
+        jobs = self._get_acct_jobs()
+        return jobs
 
 
 class Files(Resource):
