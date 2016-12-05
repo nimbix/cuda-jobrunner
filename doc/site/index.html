@@ -115,10 +115,24 @@
 <li>Embarassingly parallel machine-learning processing on big data sets</li>
 <li>Accelerated machine-learning inference cluster using NVIDIA GPUs, IBM POWER8, or Xilinx FPGAs</li>
 <li>Turn-key REST API for latency-critical command-line applications</li>
+<li>Parallelizing a GPU-driven application that respects CUDA_VISIBLE_DEVICES to assign work to a GPU, but doesn't inherently support multi-GPU usage</li>
 </ul>
 <h2 id="installation">Installation</h2>
 <p><strong>Operating System</strong>: Ubuntu 14.04 or Ubuntu 16.04 Docker base images</p>
-<h3 id="method-1-inherit-from-one-of-the-pre-enabled-nimbix-dockerfiles-recommended">Method 1: Inherit from one of the pre-enabled Nimbix Dockerfiles (recommended)</h3>
+<h3 id="method-1-inherit-your-pre-built-application-image-in-the-template-dockerfile-on-github">Method 1: Inherit your pre-built application image in the <strong>template</strong> Dockerfile on Github</h3>
+<pre><code># Dockerfile
+
+FROM {your-application}
+
+... github.com/nimbix/base-jobrunner.git:Dockerfile.tpl ...
+</code></pre>
+
+<pre><code class="bash">
+docker build .
+
+</code></pre>
+
+<h3 id="method-2-inherit-from-one-of-the-pre-enabled-nimbix-dockerfiles">Method 2: Inherit from one of the pre-enabled Nimbix Dockerfiles</h3>
 <p>For example, you can prepare your code like this:</p>
 <pre><code># Dockerfile
 
@@ -129,7 +143,6 @@ RUN /usr/local/yourcode/install.sh
 </code></pre>
 
 <p>Use the command, <code>launch</code> in <code>/etc/NAE/AppDef.json</code>, which will invoke <code>/usr/local/scripts/start.sh</code>. You can customize <code>/usr/local/scripts/start.sh</code>. The core services are started using <a href="http://supervisord.org/">supervisord</a>.</p>
-<h3 id="method-2-auto-install-inside-of-dockerfile">Method 2: Auto-install inside of Dockerfile</h3>
 <h3 id="method-3-manual-installation">Method 3: Manual installation</h3>
 <h1 id="example-usage">Example Usage</h1>
 <h3 id="client">Client</h3>
@@ -188,5 +201,5 @@ c.submit(job)
 
 <!--
 MkDocs version : 0.16.0
-Build Date UTC : 2016-12-02 04:04:52
+Build Date UTC : 2016-12-05 01:29:29
 -->

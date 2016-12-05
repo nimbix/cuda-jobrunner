@@ -2,7 +2,7 @@
     "docs": [
         {
             "location": "/", 
-            "text": "Overview\n\n\nThis is a turn-key REST-driven job scheduler for custom applications. The application has been tested on Ubuntu 14.04 and Ubuntu 16.04 base images on Nimbix. Any Ubuntu 14.04 or Ubuntu 16.04 operating system should support the installation. If you are interested in running on another flavor of Linux such as CentOS, please feel free to open an issue on Github or send a pull request.\n\n\nUse Cases\n\n\n\n\nEmbarassingly parallel machine-learning processing on big data sets\n\n\nAccelerated machine-learning inference cluster using NVIDIA GPUs, IBM POWER8, or Xilinx FPGAs\n\n\nTurn-key REST API for latency-critical command-line applications\n\n\n\n\nInstallation\n\n\nOperating System\n: Ubuntu 14.04 or Ubuntu 16.04 Docker base images\n\n\nMethod 1: Inherit from one of the pre-enabled Nimbix Dockerfiles (recommended)\n\n\nFor example, you can prepare your code like this:\n\n\n# Dockerfile\n\nFROM jarvice/cuda-jobrunner\n\nADD ./yourcode /usr/local/yourcode\nRUN /usr/local/yourcode/install.sh\n\n\n\n\nUse the command, \nlaunch\n in \n/etc/NAE/AppDef.json\n, which will invoke \n/usr/local/scripts/start.sh\n. You can customize \n/usr/local/scripts/start.sh\n. The core services are started using \nsupervisord\n.\n\n\nMethod 2: Auto-install inside of Dockerfile\n\n\nMethod 3: Manual installation\n\n\nExample Usage\n\n\nClient\n\n\n# Launch Cluster\njob = ...\nc = AuthenticatedClient(username='username', apikey='apikey')\nc.submit(job)\n\n# Launch short-running HPC tasks\n...", 
+            "text": "Overview\n\n\nThis is a turn-key REST-driven job scheduler for custom applications. The application has been tested on Ubuntu 14.04 and Ubuntu 16.04 base images on Nimbix. Any Ubuntu 14.04 or Ubuntu 16.04 operating system should support the installation. If you are interested in running on another flavor of Linux such as CentOS, please feel free to open an issue on Github or send a pull request.\n\n\nUse Cases\n\n\n\n\nEmbarassingly parallel machine-learning processing on big data sets\n\n\nAccelerated machine-learning inference cluster using NVIDIA GPUs, IBM POWER8, or Xilinx FPGAs\n\n\nTurn-key REST API for latency-critical command-line applications\n\n\nParallelizing a GPU-driven application that respects CUDA_VISIBLE_DEVICES to assign work to a GPU, but doesn't inherently support multi-GPU usage\n\n\n\n\nInstallation\n\n\nOperating System\n: Ubuntu 14.04 or Ubuntu 16.04 Docker base images\n\n\nMethod 1: Inherit your pre-built application image in the \ntemplate\n Dockerfile on Github\n\n\n# Dockerfile\n\nFROM {your-application}\n\n... github.com/nimbix/base-jobrunner.git:Dockerfile.tpl ...\n\n\n\n\n\ndocker build .\n\n\n\n\n\nMethod 2: Inherit from one of the pre-enabled Nimbix Dockerfiles\n\n\nFor example, you can prepare your code like this:\n\n\n# Dockerfile\n\nFROM jarvice/cuda-jobrunner\n\nADD ./yourcode /usr/local/yourcode\nRUN /usr/local/yourcode/install.sh\n\n\n\n\nUse the command, \nlaunch\n in \n/etc/NAE/AppDef.json\n, which will invoke \n/usr/local/scripts/start.sh\n. You can customize \n/usr/local/scripts/start.sh\n. The core services are started using \nsupervisord\n.\n\n\nMethod 3: Manual installation\n\n\nExample Usage\n\n\nClient\n\n\n# Launch Cluster\njob = ...\nc = AuthenticatedClient(username='username', apikey='apikey')\nc.submit(job)\n\n# Launch short-running HPC tasks\n...", 
             "title": "Overview"
         }, 
         {
@@ -12,7 +12,7 @@
         }, 
         {
             "location": "/#use-cases", 
-            "text": "Embarassingly parallel machine-learning processing on big data sets  Accelerated machine-learning inference cluster using NVIDIA GPUs, IBM POWER8, or Xilinx FPGAs  Turn-key REST API for latency-critical command-line applications", 
+            "text": "Embarassingly parallel machine-learning processing on big data sets  Accelerated machine-learning inference cluster using NVIDIA GPUs, IBM POWER8, or Xilinx FPGAs  Turn-key REST API for latency-critical command-line applications  Parallelizing a GPU-driven application that respects CUDA_VISIBLE_DEVICES to assign work to a GPU, but doesn't inherently support multi-GPU usage", 
             "title": "Use Cases"
         }, 
         {
@@ -21,14 +21,14 @@
             "title": "Installation"
         }, 
         {
-            "location": "/#method-1-inherit-from-one-of-the-pre-enabled-nimbix-dockerfiles-recommended", 
-            "text": "For example, you can prepare your code like this:  # Dockerfile\n\nFROM jarvice/cuda-jobrunner\n\nADD ./yourcode /usr/local/yourcode\nRUN /usr/local/yourcode/install.sh  Use the command,  launch  in  /etc/NAE/AppDef.json , which will invoke  /usr/local/scripts/start.sh . You can customize  /usr/local/scripts/start.sh . The core services are started using  supervisord .", 
-            "title": "Method 1: Inherit from one of the pre-enabled Nimbix Dockerfiles (recommended)"
+            "location": "/#method-1-inherit-your-pre-built-application-image-in-the-template-dockerfile-on-github", 
+            "text": "# Dockerfile\n\nFROM {your-application}\n\n... github.com/nimbix/base-jobrunner.git:Dockerfile.tpl ...  \ndocker build .", 
+            "title": "Method 1: Inherit your pre-built application image in the template Dockerfile on Github"
         }, 
         {
-            "location": "/#method-2-auto-install-inside-of-dockerfile", 
-            "text": "", 
-            "title": "Method 2: Auto-install inside of Dockerfile"
+            "location": "/#method-2-inherit-from-one-of-the-pre-enabled-nimbix-dockerfiles", 
+            "text": "For example, you can prepare your code like this:  # Dockerfile\n\nFROM jarvice/cuda-jobrunner\n\nADD ./yourcode /usr/local/yourcode\nRUN /usr/local/yourcode/install.sh  Use the command,  launch  in  /etc/NAE/AppDef.json , which will invoke  /usr/local/scripts/start.sh . You can customize  /usr/local/scripts/start.sh . The core services are started using  supervisord .", 
+            "title": "Method 2: Inherit from one of the pre-enabled Nimbix Dockerfiles"
         }, 
         {
             "location": "/#method-3-manual-installation", 
@@ -47,7 +47,7 @@
         }, 
         {
             "location": "/apidoc/", 
-            "text": "API Documentation\n\n\nREST API Endpoints\n\n\nThe REST API exposes simple job scheduling functionality for arbitrary asychronous, compute-intensive workflows.\n\n\n/submission\n\n\nPOST\n Submit a new job to be processed asynchronously\n\n\n\n\n\n\n\n\nParam\n\n\nType\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\ncommand\n\n\nstring\n\n\ncommand that should be invoked in the environment\n\n\n\n\n\n\nfile[]\n\n\nfile(s)\n\n\nmultipart form-data files, where name of the file indicates the destination path\n\n\n\n\n\n\nunique_id\n\n\nstring (optional)\n\n\nunique id used to track (will be generated if not provided)\n\n\n\n\n\n\n\n\n Example \n\n\nimport requests\nresponse = requests.post('http://localhost:5000/submission',\n                        data={'command': 'ls -al /tmp'},\n                        files=[('file[]', ('/tmp/file.png', open('file.png'), 'image/png'))])\nprint(response.status_code)\nprint(response.json())\n\n\n\n\n/status/\n\n\nGET\n Queries a list of job statuses\n\n\n/files\n\n\nGET\n Retreive a file for download, or a list of files in the top-level of a directory.\n\n\n\n\n\n\n\n\nParam\n\n\nType\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\npath\n\n\nstring\n\n\nabsolute path to a file or directory\n\n\n\n\n\n\n\n\nExample\n\n\n/download\n\n\nGET\n\n\n/terminate\n\n\nPOST\n With no parameters, schedules the web service environment to terminate immediately\n\n\nResponses\n\n\n\n\n\n\n\n\nCode\n\n\nMeaning\n\n\n\n\n\n\n\n\n\n\n202\n\n\nShutdown has been scheduled\n\n\n\n\n\n\n\n\nPublish-Subscribe via RabbitMQ\n\n\nAfter your call to \nPOST /submission\n, you can use the \njob_id\n parameter to filter for the response on the \njob_response\n RabbitMQ queue.\n\n\nExample\n\n\npip install pika\n\n\n# job_subscribe.py\n\nimport pika\n\nconnection = pika.BlockingConnection(pika.ConnectionParmeters('localhost'))\nchannel = connection.channel()", 
+            "text": "API Documentation\n\n\nREST API Endpoints\n\n\nThe REST API exposes simple job scheduling functionality for arbitrary asychronous, compute-intensive workflows.\n\n\n/jobs\n\n\nGET\n Queries a list of job statuses\n\n\nResponses\n\n\n\n\n\n\n\n\nCode\n\n\nMeaning\n\n\n\n\n\n\n\n\n\n\n200\n\n\nList of jobs returned\n\n\n\n\n\n\n\n\nResponse Content:\n\n\n\n\n\n\n\n\nParam\n\n\nType\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\ncount\n\n\nint\n\n\nNumber of currently running jobs\n\n\n\n\n\n\nresults\n\n\narray\n\n\nArray of currently running jobs\n\n\n\n\n\n\nresults[i]\n\n\njob\n\n\ndict-like representation of job\n\n\n\n\n\n\n\n\nPOST\n Submit a new job to be processed asynchronously\n\n\n\n\n\n\n\n\nParam\n\n\nType\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\ncommand\n\n\nstring\n\n\ncommand that should be invoked in the environment\n\n\n\n\n\n\nfile[]\n\n\nfile(s)\n\n\nmultipart form-data files, where name of the file indicates the destination path\n\n\n\n\n\n\n\n\nResponses\n\n\n\n\n\n\n\n\nCode\n\n\nMeaning\n\n\n\n\n\n\n\n\n\n\n201\n\n\nJob has been created\n\n\n\n\n\n\n\n\nResponse Content:\n\n\n\n\n\n\n\n\nParam\n\n\nType\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\njob_id\n\n\nstring\n\n\nunique job identifier\n\n\n\n\n\n\ncommand\n\n\nstring\n\n\nThe command used\n\n\n\n\n\n\ngpus\n\n\nint(optional)\n\n\nIf present, indicates the number of GPUs requested\n\n\n\n\n\n\n\n\n Example \n\n\nimport requests\nresponse = requests.post('http://localhost:5000/submission',\n                        data={'command': 'ls -al /tmp'},\n                        files=[('file[]', ('/tmp/file.png', open('file.png'), 'image/png'))])\nprint(response.status_code)\nprint(response.json())\n\n\n\n\n/jobs/{job_id}\n\n\nGET\n Queries status of a single job\n\n\nResponses\n\n\n\n\n\n\n\n\nParam\n\n\nType\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\njob_id\n\n\nstring\n\n\nJob ID for currently running job\n\n\n\n\n\n\nstatus\n\n\nstring\n\n\nOne of 'QUEUED', 'PENDING', 'RUNNING', 'COMPLETE', 'FAILED'\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nCode\n\n\nMeaning\n\n\n\n\n\n\n\n\n\n\n200\n\n\nOK\n\n\n\n\n\n\n404\n\n\nJob ID is not found\n\n\n\n\n\n\n\n\nDELETE\n Schedules immediate termination of currently running job\n\n\nResponses\n\n\n\n\n\n\n\n\nCode\n\n\nMeaning\n\n\n\n\n\n\n\n\n\n\n202\n\n\nShutdown has been scheduled\n\n\n\n\n\n\n\n\n/files\n\n\nGET\n Retreive a file for download, or a list of files in the top-level of a directory.\n\n\n\n\n\n\n\n\nParam\n\n\nType\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\npath\n\n\nstring\n\n\nabsolute path to a file or directory\n\n\n\n\n\n\n\n\nPublish-Subscribe via RabbitMQ\n\n\nAfter your call to \nPOST /submission\n, you can use the \njob_id\n parameter to filter for the response on the \njob_response\n RabbitMQ queue.\n\n\nExample\n\n\npip install pika\n\n\n# job_subscribe.py\n\nimport pika\n\nconnection = pika.BlockingConnection(pika.ConnectionParmeters('localhost'))\nchannel = connection.channel()", 
             "title": "API"
         }, 
         {
@@ -61,29 +61,19 @@
             "title": "REST API Endpoints"
         }, 
         {
-            "location": "/apidoc/#submission", 
-            "text": "POST  Submit a new job to be processed asynchronously     Param  Type  Description      command  string  command that should be invoked in the environment    file[]  file(s)  multipart form-data files, where name of the file indicates the destination path    unique_id  string (optional)  unique id used to track (will be generated if not provided)      Example   import requests\nresponse = requests.post('http://localhost:5000/submission',\n                        data={'command': 'ls -al /tmp'},\n                        files=[('file[]', ('/tmp/file.png', open('file.png'), 'image/png'))])\nprint(response.status_code)\nprint(response.json())", 
-            "title": "/submission"
+            "location": "/apidoc/#jobs", 
+            "text": "GET  Queries a list of job statuses  Responses     Code  Meaning      200  List of jobs returned     Response Content:     Param  Type  Description      count  int  Number of currently running jobs    results  array  Array of currently running jobs    results[i]  job  dict-like representation of job     POST  Submit a new job to be processed asynchronously     Param  Type  Description      command  string  command that should be invoked in the environment    file[]  file(s)  multipart form-data files, where name of the file indicates the destination path     Responses     Code  Meaning      201  Job has been created     Response Content:     Param  Type  Description      job_id  string  unique job identifier    command  string  The command used    gpus  int(optional)  If present, indicates the number of GPUs requested      Example   import requests\nresponse = requests.post('http://localhost:5000/submission',\n                        data={'command': 'ls -al /tmp'},\n                        files=[('file[]', ('/tmp/file.png', open('file.png'), 'image/png'))])\nprint(response.status_code)\nprint(response.json())", 
+            "title": "/jobs"
         }, 
         {
-            "location": "/apidoc/#status", 
-            "text": "GET  Queries a list of job statuses", 
-            "title": "/status/"
+            "location": "/apidoc/#jobsjob_id", 
+            "text": "GET  Queries status of a single job  Responses     Param  Type  Description      job_id  string  Job ID for currently running job    status  string  One of 'QUEUED', 'PENDING', 'RUNNING', 'COMPLETE', 'FAILED'        Code  Meaning      200  OK    404  Job ID is not found     DELETE  Schedules immediate termination of currently running job  Responses     Code  Meaning      202  Shutdown has been scheduled", 
+            "title": "/jobs/{job_id}"
         }, 
         {
             "location": "/apidoc/#files", 
-            "text": "GET  Retreive a file for download, or a list of files in the top-level of a directory.     Param  Type  Description      path  string  absolute path to a file or directory     Example", 
+            "text": "GET  Retreive a file for download, or a list of files in the top-level of a directory.     Param  Type  Description      path  string  absolute path to a file or directory", 
             "title": "/files"
-        }, 
-        {
-            "location": "/apidoc/#download", 
-            "text": "GET", 
-            "title": "/download"
-        }, 
-        {
-            "location": "/apidoc/#terminate", 
-            "text": "POST  With no parameters, schedules the web service environment to terminate immediately  Responses     Code  Meaning      202  Shutdown has been scheduled", 
-            "title": "/terminate"
         }, 
         {
             "location": "/apidoc/#publish-subscribe-via-rabbitmq", 

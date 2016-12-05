@@ -106,7 +106,50 @@
                 <h1 id="api-documentation">API Documentation</h1>
 <h2 id="rest-api-endpoints">REST API Endpoints</h2>
 <p>The REST API exposes simple job scheduling functionality for arbitrary asychronous, compute-intensive workflows.</p>
-<h3 id="submission">/submission</h3>
+<h3 id="jobs">/jobs</h3>
+<p><strong>GET</strong> Queries a list of job statuses</p>
+<p><strong>Responses</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>List of jobs returned</td>
+</tr>
+</tbody>
+</table>
+<p>Response Content:</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>count</td>
+<td>int</td>
+<td>Number of currently running jobs</td>
+</tr>
+<tr>
+<td>results</td>
+<td>array</td>
+<td>Array of currently running jobs</td>
+</tr>
+<tr>
+<td>results[i]</td>
+<td>job</td>
+<td>dict-like representation of job</td>
+</tr>
+</tbody>
+</table>
 <p><strong>POST</strong> Submit a new job to be processed asynchronously</p>
 <table>
 <thead>
@@ -127,10 +170,47 @@
 <td>file(s)</td>
 <td>multipart form-data files, where name of the file indicates the destination path</td>
 </tr>
+</tbody>
+</table>
+<p><strong>Responses</strong></p>
+<table>
+<thead>
 <tr>
-<td>unique_id</td>
-<td>string (optional)</td>
-<td>unique id used to track (will be generated if not provided)</td>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>201</td>
+<td>Job has been created</td>
+</tr>
+</tbody>
+</table>
+<p>Response Content:</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>job_id</td>
+<td>string</td>
+<td>unique job identifier</td>
+</tr>
+<tr>
+<td>command</td>
+<td>string</td>
+<td>The command used</td>
+</tr>
+<tr>
+<td>gpus</td>
+<td>int(optional)</td>
+<td>If present, indicates the number of GPUs requested</td>
 </tr>
 </tbody>
 </table>
@@ -143,8 +223,64 @@ print(response.status_code)
 print(response.json())
 </code></pre>
 
-<h3 id="status">/status/<string:job_id></h3>
-<p><strong>GET</strong> Queries a list of job statuses</p>
+<h3 id="jobsjob_id">/jobs/{job_id}</h3>
+<p><strong>GET</strong> Queries status of a single job</p>
+<p><strong>Responses</strong></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>job_id</td>
+<td>string</td>
+<td>Job ID for currently running job</td>
+</tr>
+<tr>
+<td>status</td>
+<td>string</td>
+<td>One of 'QUEUED', 'PENDING', 'RUNNING', 'COMPLETE', 'FAILED'</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>OK</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Job ID is not found</td>
+</tr>
+</tbody>
+</table>
+<p><strong>DELETE</strong> Schedules immediate termination of currently running job</p>
+<p><strong>Responses</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>202</td>
+<td>Shutdown has been scheduled</td>
+</tr>
+</tbody>
+</table>
 <h3 id="files">/files</h3>
 <p><strong>GET</strong> Retreive a file for download, or a list of files in the top-level of a directory.</p>
 <table>
@@ -160,26 +296,6 @@ print(response.json())
 <td>path</td>
 <td>string</td>
 <td>absolute path to a file or directory</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong></p>
-<h3 id="download">/download</h3>
-<p><strong>GET</strong></p>
-<h3 id="terminate">/terminate</h3>
-<p><strong>POST</strong> With no parameters, schedules the web service environment to terminate immediately</p>
-<p><strong>Responses</strong></p>
-<table>
-<thead>
-<tr>
-<th>Code</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>202</td>
-<td>Shutdown has been scheduled</td>
 </tr>
 </tbody>
 </table>
