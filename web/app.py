@@ -258,9 +258,6 @@ class JobControl(Resource):
         internal_job_id = self._get_internal_id_from_job_name(job_id)
         if internal_job_id:
             SlurmInterface.cancel(job_id=job_id)
-            subprocess.call(['/opt/slurm/bin/scancel',
-                             '{internal_job_id}'.format(
-                                 internal_job_id=internal_job_id)])
             return {'job_id': job_id,
                     'message': 'Canceling job'}, 202
         return {'message': 'Job not found'}, 404
