@@ -50,3 +50,4 @@ for i in `cat /etc/JARVICE/nodes`; do
     ssh $i sudo /etc/init.d/munge start
     ssh $i sudo /opt/slurm/sbin/slurmd
 done
+
