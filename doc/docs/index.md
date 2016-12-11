@@ -6,7 +6,7 @@ This is a turn-key REST-driven job scheduler for custom applications. The applic
 *   Embarassingly parallel machine-learning processing on big data sets
 *   Accelerated machine-learning inference cluster using NVIDIA GPUs, IBM POWER8, or Xilinx FPGAs
 *   Turn-key REST API for latency-critical command-line applications
-*   Parallelizing a GPU-driven application that respects CUDA_VISIBLE_DEVICES to assign work to a GPU, but doesn't inherently support multi-GPU usage
+*   Parallelizing a GPU-driven application that respects CUDA_VISIBLE_DEVICES to assign work to a GPU, but may not support multi-GPU usage natively
 
 ## Installation
 
@@ -17,7 +17,7 @@ This is a turn-key REST-driven job scheduler for custom applications. The applic
 ```
 # Dockerfile
 
-FROM {your-application}
+FROM {your-application-image}
 
 ... github.com/nimbix/base-jobrunner.git:Dockerfile.tpl ...
 ```
