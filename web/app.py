@@ -101,7 +101,7 @@ def validate_path(path):
     return True
 
 
-def parse_acct_jobs(raw_output):
+def parse_acct_jobs(raw_output, internal=False):
     """Helper function to parse the output of Slurm sacct command
 
     Args:
@@ -119,15 +119,13 @@ def parse_acct_jobs(raw_output):
         row_items = row.split('|')
         if len(row_items) >= 7 and len(row_items[0].split('.')) == 1:
             job_id = row_items[1]
-            internal_id = row_items[4]
+            internal_id = row_items[0]
             status = row_items[5]
-
-            jobs.update({job_id:
-                         {
-                             'id': job_id,
-                             'status': status,
-                             'internal_id': internal_id
-                         }})
+            job = {'id': job_id,
+                   'status': status}
+            if internal:
+                job.update({'internal_id': internal_id})
+            jobs.update({job_id: job})
 
     return jobs
 
@@ -170,31 +168,37 @@ class SlurmInterface(object):
             key(job_id):
                {'id': job_id, 'status': ..., 'internal_id'}}
         """
-        output = subprocess.check_output(
-            ['/opt/slurm/bin/sacct', '-a', '-p', '-n'])
-        return parse_acct_jobs(output, internal=False)
+        try:
+            output = subprocess.check_output(
+                ['/opt/slurm/bin/sacct', '-a', '-p', '-n'])
+        except subprocess.CalledProcessError:
+            logger.exception('Failure to get jobs from job interface.')
+            return {}
+        return parse_acct_jobs(output)
 
     @classmethod
     def get_queued_jobs(cls):
-
+        # Query output in form of:
+        # JOBID,NAME,STATE
         output = subprocess.check_output(
             ['/opt/slurm/bin/squeue',
              '-t', 'PENDING',
-             '-n',
+             '-h',
              '-o', '%i,%j,%T'])
         lines = output.split('\n')
         jobs = {}
         for line in lines:
             cols = line.split(',')
-            internal_id = cols[0]
-            job_id = cols[1]
-            status = cols[2]
-            jobs.update({
-                job_id: {
-                    'id': job_id,
-                    'internal_id': internal_id,
-                    'status': status
-                }})
+            if len(cols) >= 3:
+                internal_id = cols[0]
+                job_id = cols[1]
+                status = cols[2]
+                jobs.update({
+                    job_id: {
+                        'id': job_id,
+                        'internal_id': internal_id,
+                        'status': status
+                    }})
         return jobs
 
     @classmethod
@@ -245,7 +249,7 @@ class Jobs(Resource):
     """
     def get(self):
         """Query list of jobs"""
-        jobs = SlurmInterface.get_acct_jobs()
+        jobs = SlurmInterface.get_all_jobs()
         jobs_response = {
             'count': len(jobs),
             'data': jobs
@@ -298,7 +302,7 @@ class Jobs(Resource):
 
 class JobControl(Resource):
     """
-    Interact with a currently running job identified by its Job ID
+    Interact with individual jobs, identified by its Job ID
 
      - GET: Queries status
      - DELETE: Cancels if running or queued
@@ -309,15 +313,17 @@ class JobControl(Resource):
     def _get_internal_id_from_job_name(self, job_id):
         jobs = self._get_acct_jobs(internal=True)
         jobs_dict = dict(jobs)
-        if job_id in jobs_dict:
+        if job_id in jobs_dict.keys():
             return jobs_dict[job_id]['internal_id']
         return None
 
     def get(self, job_id):
         """Get status of a submitted job"""
         jobs = self._get_acct_jobs()
-        if job_id in jobs.keys():
-            return jobs.get(job_id)
+        job = jobs.get(job_id, None)
+        if job is not None:
+            job.pop('internal_id', None)
+            return job
         return {'message': 'Job id {job_id} not found!'.format(
             job_id=job_id)}, 404
 
@@ -458,4 +464,9 @@ api.add_resource(Output, '/output/<job_id>')
 api.add_resource(Files, '/files')
 
 if __name__ == '__main__':
+    if not os.path.exists('/opt/slurm/bin') or not \
+       os.path.exists('/opt/slurm/sbin'):
+        logger.critical(
+            'SLURM could not be found in this environment. Exiting')
+        sys.exit(1)
     app.run(host='0.0.0.0', debug=True)
