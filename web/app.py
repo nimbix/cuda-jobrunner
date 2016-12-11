@@ -1,11 +1,41 @@
+# Copyright (c) 2016, Nimbix, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# The views and conclusions contained in the software and documentation are
+# those of the authors and should not be interpreted as representing official
+# policies, either expressed or implied, of Nimbix, Inc.
+
 from flask import Flask, send_from_directory, request
 from flask_restful import Resource, Api, reqparse
+
 import os
 import subprocess
 import logging
 import uuid
 import sys
 
+# Configure logging
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)
 ch = logging.StreamHandler(sys.stdout)
@@ -18,14 +48,19 @@ logger = logging.getLogger(__name__)
 
 UPLOAD_FOLDER = '/data'
 
-
 app = Flask(__name__)
 api = Api(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 def queue_job(command, files, gpus=None):
-    """Queue job using Slurm"""
+    """Queues a task using an interface to the job runner.
+
+    Args:
+      command(str): Command to execute. Assumes /bin/bash shell.
+      files(str): Absolute paths to files
+      gpus(int): The number of GPUs required for this task.
+    """
     job_id, error = SlurmInterface.submit(command, gpus)
 
     message = '"{job_id}","{command}","{files}"\n'.format(
@@ -38,12 +73,28 @@ def queue_job(command, files, gpus=None):
 
 
 def handle_file(file_t, destination):
+    """Saves file_t to the destination.
+
+    This saves any input file to any destination path.
+
+    Args:
+      file_t: Uploaded file object
+      destination(str): Destination path. Can be any path.
+    """
     file_t.save(destination)
     return destination
 
 
 def validate_path(path):
+    """Validates that the given path is an absolute path by validating
+    that the first character is a '/'
 
+    Args:
+      path(str): Path
+
+    Returns:
+      boolean (Valid, True)
+    """
     if path[0] != '/':
         return False, 'Path must be absolute path beginning with /'
 
@@ -51,7 +102,17 @@ def validate_path(path):
 
 
 def parse_acct_jobs(raw_output):
+    """Helper function to parse the output of Slurm sacct command
 
+    Args:
+      raw_output(str): Raw std output of the Slurm sacct command
+
+    Returns: Dict of key: job-dict pairs. The primary key is the
+      job_id. The data structure contained is:
+        {'id': '<job uuid>',
+         'status': '<completion status>',
+         'internal_id': '<task runner's number>'}
+    """
     lines = raw_output.split('\n')
     jobs = {}
     for row in lines:
@@ -86,10 +147,9 @@ class SlurmInterface(object):
         return {'id': job_name,
                 'status': job_status,
                 'output': job_output}
-    
+
     @classmethod
     def get_all_jobs(cls):
-
         queued = cls.get_queued_jobs()
         not_queued = cls.get_acct_jobs()
         jobs = queued.copy()
@@ -179,6 +239,9 @@ class SlurmInterface(object):
 
 class Jobs(Resource):
     """List and create jobs
+
+     - GET: Query a list of jobs
+     - POST: Submit a job
     """
     def get(self):
         """Query list of jobs"""
@@ -234,7 +297,12 @@ class Jobs(Resource):
 
 
 class JobControl(Resource):
+    """
+    Interact with a currently running job identified by its Job ID
 
+     - GET: Queries status
+     - DELETE: Cancels if running or queued
+    """
     def _get_acct_jobs(self, internal=False):
         return SlurmInterface.get_acct_jobs(internal)
 
@@ -266,6 +334,10 @@ class JobControl(Resource):
 class Files(Resource):
     """Static file REST endpoint. Note that all files that are not stored
     in /data will not be persisted when this environment is terminated.
+
+     - GET: Download a file
+     - POST: Upload a file
+     - DELETE: Delete a file
     """
     def _validate_path(self, path):
         if path[0] != '/':
@@ -372,7 +444,8 @@ class Output(Resource):
             return send_from_directory('/tmp', '{job_id}.out'.format(
                 job_id=job_id))
         else:
-            return {'message': 'Job output not found. Is it running?'}, 404
+            return {'id': '{job_id}'.format(job_id=job_id),
+                    'message': 'Job output not found. Is it running?'}, 404
 
 
 # Launching jobs and querying status
