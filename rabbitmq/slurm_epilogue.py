@@ -8,6 +8,7 @@ import logging
 SLURM_EPILOG_LOGFILE = os.getenv('SLURM_EPILOG_LOGFILE',
                                  '/code/web/slurm_epilog.log')
 
+# Configure Logging
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)
 fh = logging.FileHandler('/code/web/slurm_epilog.log')
