@@ -35,22 +35,25 @@ import logging
 import uuid
 import sys
 
-# Configure logging
-root = logging.getLogger()
-root.setLevel(logging.DEBUG)
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('[%(levelname)s] %(name)s %(message)s')
-ch.setFormatter(formatter)
-root.addHandler(ch)
-
-logger = logging.getLogger(__name__)
 
 UPLOAD_FOLDER = '/data'
 
 app = Flask(__name__)
 api = Api(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+def configure_logging():
+
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+    sh = logging.StreamHandler(sys.stdout)
+    sh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('[%(levelname)s] %(name)s %(message)s')
+    sh.setFormatter(formatter)
+    root.addHandler(sh)
+    logger = logging.getLogger(__name__)
+    return logger
 
 
 def queue_job(command, files, gpus=None):
@@ -464,6 +467,8 @@ api.add_resource(Output, '/output/<job_id>')
 api.add_resource(Files, '/files')
 
 if __name__ == '__main__':
+    global logger
+    logger = configure_logging()
     if not os.path.exists('/opt/slurm/bin') or not \
        os.path.exists('/opt/slurm/sbin'):
         logger.critical(
